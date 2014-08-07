@@ -13,19 +13,19 @@ type Data url.Values
 // Data. The content in the body of the request has a higher priority,
 // will be added to Data first, and will be the result of any operation
 // which gets the first element for a given key (e.g. data.Get).
-func Parse(req *http.Request) Data {
+func Parse(req *http.Request) (Data, error) {
 	values := url.Values{}
 	contentType := req.Header.Get("Content-Type")
 	if strings.Contains(contentType, "multipart/form-data") {
 		if err := req.ParseMultipartForm(2048); err != nil {
-			panic(err)
+			return nil, err
 		}
 		for key, val := range req.MultipartForm.Value {
 			values[key] = val
 		}
 	} else if strings.Contains(contentType, "form-urlencoded") {
 		if err := req.ParseForm(); err != nil {
-			panic(err)
+			return nil, err
 		}
 		for key, val := range req.PostForm {
 			values[key] = val
@@ -34,7 +34,7 @@ func Parse(req *http.Request) Data {
 	for key, val := range req.URL.Query() {
 		values[key] = val
 	}
-	return Data(values)
+	return Data(values), nil
 }
 
 // Add adds the value to key. It appends to any existing values associated with key.

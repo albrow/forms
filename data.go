@@ -26,19 +26,25 @@ func Parse(req *http.Request) (Data, error) {
 		if err := req.ParseMultipartForm(2048); err != nil {
 			return nil, err
 		}
-		for key, val := range req.MultipartForm.Value {
-			values.Add(key, value)
+		for key, vals := range req.MultipartForm.Value {
+			for _, val := range vals {
+				values.Add(key, val)
+			}
 		}
 	} else if strings.Contains(contentType, "form-urlencoded") {
 		if err := req.ParseForm(); err != nil {
 			return nil, err
 		}
-		for key, val := range req.PostForm {
-			values.Add(key, value)
+		for key, vals := range req.PostForm {
+			for _, val := range vals {
+				values.Add(key, val)
+			}
 		}
 	}
-	for key, val := range req.URL.Query() {
-		values.Add(key, value)
+	for key, vals := range req.URL.Query() {
+		for _, val := range vals {
+			values.Add(key, val)
+		}
 	}
 	return Data(values), nil
 }

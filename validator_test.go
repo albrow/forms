@@ -1,6 +1,9 @@
 package data
 
 import (
+	"fmt"
+	"net/http"
+	"net/url"
 	"regexp"
 	"testing"
 )
@@ -139,4 +142,36 @@ func TestMatchEmail(t *testing.T) {
 	if len(val.Errors) != 2 {
 		t.Errorf("Expected 2 validation errors but got %d.", len(val.Errors))
 	}
+}
+
+func ExampleValidator() {
+	// Construct a request object for example purposes only.
+	// Typically you would be using this inside a http.HandlerFunc,
+	// not constructing your own request.
+	req, _ := http.NewRequest("GET", "/", nil)
+	values := url.Values{}
+	values.Add("name", "Bob")
+	values.Add("age", "25")
+	req.PostForm = values
+	req.Header.Set("Content-Type", "form-urlencoded")
+
+	// Parse the form data.
+	data, _ := Parse(req)
+
+	// Validate the data.
+	val := data.Validator()
+	val.Require("name")
+	val.MinLength("name", 4)
+	val.Require("age")
+
+	// Here's how you can include a custom error message.
+	val.Require("retired", "Must specify whether or not person is retired.")
+
+	// Check for validation errors and print them if there are any.
+	if val.HasErrors() {
+		fmt.Printf("%#v\n", val.Errors)
+	}
+
+	// Output:
+	// []string{"name must be at least 4 characters long.", "Must specify whether or not person is retired."}
 }

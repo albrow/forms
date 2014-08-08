@@ -2,7 +2,7 @@ Go Data Parser
 ==============
 
 This library parses data from the body and url query paramaters
-of an http.Request and from and combines it into a single Data object.
+of an http.Request and combines it into a single Data object.
 It also provides helper methods for converting data into other types
 and a Validator object which can be used to validate the data. It is
 written to be framework-agnostic and works directly with the http
@@ -19,7 +19,7 @@ go get github.com/albrow/go-data-parser
 ```
 
 Then include the package in your import statements:
-```
+``` go
 import "github.com/albrow/go-data-parser"
 ```
 

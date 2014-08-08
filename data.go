@@ -7,12 +7,18 @@ import (
 	"strings"
 )
 
+// Data holds data obtained from the request body and url query parameters.
+// Because Data is built from multiple sources, sometimes there will be more
+// than one value for a given key. You can use Get, Set, Add, and Del to access
+// the first element for a given key or access the map directly to access additional
+// elements for a given key. You can also use helper methods to convert the first
+// value for a given key to a different type (e.g. bool or int).
 type Data url.Values
 
 // Parse parses the request body and url query parameters into
 // Data. The content in the body of the request has a higher priority,
 // will be added to Data first, and will be the result of any operation
-// which gets the first element for a given key (e.g. data.Get).
+// which gets the first element for a given key (e.g. Get, GetInt, or GetBool).
 func Parse(req *http.Request) (Data, error) {
 	values := url.Values{}
 	contentType := req.Header.Get("Content-Type")
@@ -21,18 +27,18 @@ func Parse(req *http.Request) (Data, error) {
 			return nil, err
 		}
 		for key, val := range req.MultipartForm.Value {
-			values[key] = val
+			values.Add(key, value)
 		}
 	} else if strings.Contains(contentType, "form-urlencoded") {
 		if err := req.ParseForm(); err != nil {
 			return nil, err
 		}
 		for key, val := range req.PostForm {
-			values[key] = val
+			values.Add(key, value)
 		}
 	}
 	for key, val := range req.URL.Query() {
-		values[key] = val
+		values.Add(key, value)
 	}
 	return Data(values), nil
 }

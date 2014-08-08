@@ -6,21 +6,35 @@ import (
 	"strings"
 )
 
+// Validator has methods for validating its underlying Data.
+// A Validator stores any errors that occurred during validation,
+// and they can be accessed directly. In a typical workflow, you
+// will create a Validator from some Data, call some methods on
+// that validator (e.g. Require), check if the validator
+// has errors, then do something with the errors if it does.
 type Validator struct {
 	data   Data
 	Keys   []string
 	Errors []string
 }
 
+// Error adds an error associated with key to the validator. err
+// should typically be a user-readable sentence, such as "username
+// is required."
 func (v *Validator) Error(key string, err string) {
 	v.Keys = append(v.Keys, key)
 	v.Errors = append(v.Errors, err)
 }
 
+// HasErrors returns true iff the Validator has errors, i.e.
+// if any validation methods called on the Validator failed.
 func (v *Validator) HasErrors() bool {
 	return len(v.Errors) > 0
 }
 
+// Require will add an error to the Validator if data[key]
+// does not exist, is an empty string, or consists of only
+// whitespace.
 func (v *Validator) Require(key string, msg ...string) {
 	if strings.TrimSpace(v.data.Get(key)) == "" {
 		v.requiredError(key, msg...)
@@ -36,8 +50,14 @@ func (v *Validator) requiredError(key string, msg ...string) {
 	}
 }
 
+// MinLength will add an error to the Validator if data[key]
+// is shorter than length (if data[key] has less than
+// length characters), not counting leading or trailing
+// whitespace.
 func (v *Validator) MinLength(key string, length int, msg ...string) {
-	if len(v.data.Get(key)) < length {
+	val := v.data.Get(key)
+	trimmed := strings.TrimSpace(val)
+	if len(trimmed) < length {
 		v.minLengthError(key, length, msg...)
 	}
 }
@@ -51,8 +71,14 @@ func (v *Validator) minLengthError(key string, length int, msg ...string) {
 	}
 }
 
+// MaxLength will add an error to the Validator if data[key]
+// is longer than length (if data[key] has more than
+// length characters), not counting leading or trailing
+// whitespace.
 func (v *Validator) MaxLength(key string, length int, msg ...string) {
-	if len(v.data.Get(key)) > length {
+	val := v.data.Get(key)
+	trimmed := strings.TrimSpace(val)
+	if len(trimmed) > length {
 		v.maxLengthError(key, length, msg...)
 	}
 }
@@ -66,6 +92,11 @@ func (v *Validator) maxLengthError(key string, length int, msg ...string) {
 	}
 }
 
+// LengthRange will add an error to the Validator if data[key]
+// is shorter than min (if data[key] has less than
+// min characters) or if data[key] is longer than max
+// (if data[key] has more than max characters), not
+// counting leading or trailing whitespace.
 func (v *Validator) LengthRange(key string, min int, max int, msg ...string) {
 	if val := v.data.Get(key); len(val) < min || len(val) > max {
 		v.lengthRangeError(key, min, max, msg...)
@@ -81,6 +112,8 @@ func (v *Validator) lengthRangeError(key string, min int, max int, msg ...string
 	}
 }
 
+// Equal will add an error to the Validator if data[key1]
+// is not equal to data[key2].
 func (v *Validator) Equal(key1 string, key2 string, msg ...string) {
 	val1 := v.data.Get(key1)
 	val2 := v.data.Get(key2)
@@ -100,12 +133,16 @@ func (v *Validator) equalError(key1 string, key2 string, msg ...string) {
 	}
 }
 
+// Match will add an error to the Validator if data[key] does
+// not match the regular expression regex.
 func (v *Validator) Match(key string, regex *regexp.Regexp, msg ...string) {
 	if !regex.MatchString(v.data.Get(key)) {
 		v.matchError(key, msg...)
 	}
 }
 
+// MatchEmail will add an error to the Validator if data[key]
+// does not match the formatting expected of an email.
 func (v *Validator) MatchEmail(key string, msg ...string) {
 	regex := regexp.MustCompile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?$")
 	v.Match(key, regex, msg...)

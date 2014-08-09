@@ -88,8 +88,21 @@ func (d Data) GetInt(key string) int {
 	if !d.KeyExists(key) || len(d[key]) == 0 {
 		return 0
 	}
-	str := d[key][0]
+	str := d.Get(key)
 	if result, err := strconv.Atoi(str); err != nil {
+		panic(err)
+	} else {
+		return result
+	}
+}
+
+// GetFloat returns the first element in data[key] converted to a float.
+func (d Data) GetFloat(key string) float64 {
+	if !d.KeyExists(key) || len(d[key]) == 0 {
+		return 0.0
+	}
+	str := d.Get(key)
+	if result, err := strconv.ParseFloat(str, 64); err != nil {
 		panic(err)
 	} else {
 		return result
@@ -101,12 +114,17 @@ func (d Data) GetBool(key string) bool {
 	if !d.KeyExists(key) || len(d[key]) == 0 {
 		return false
 	}
-	str := d[key][0]
+	str := d.Get(key)
 	if result, err := strconv.ParseBool(str); err != nil {
 		panic(err)
 	} else {
 		return result
 	}
+}
+
+// GetBytes returns the first element in data[key] converted to a slice of bytes.
+func (d Data) GetBytes(key string) []byte {
+	return []byte(d.Get(key))
 }
 
 // GetStringsSplit returns the first element in data[key] split into a slice delimited by delim.

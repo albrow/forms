@@ -72,6 +72,38 @@ func TestGetInt(t *testing.T) {
 	}
 }
 
+func TestGetFloat(t *testing.T) {
+	data := Data(map[string][]string{
+		"age":    []string{"25.7", "33"},
+		"weight": []string{"42"},
+	})
+
+	table := []struct {
+		key      string
+		expected float64
+	}{
+		{
+			key:      "age",
+			expected: 25.7,
+		},
+		{
+			key:      "weight",
+			expected: 42.0,
+		},
+		{
+			key:      "height",
+			expected: 0.0,
+		},
+	}
+
+	for _, test := range table {
+		got := data.GetFloat(test.key)
+		if got != test.expected {
+			t.Errorf("%s was incorrect. Expected %f, but got %f.\n", test.key, test.expected, got)
+		}
+	}
+}
+
 func TestGetBool(t *testing.T) {
 	data := Data(map[string][]string{
 		"retired":         []string{"true", "false"},
@@ -105,6 +137,41 @@ func TestGetBool(t *testing.T) {
 		got := data.GetBool(test.key)
 		if got != test.expected {
 			t.Errorf("%s was incorrect. Expected %t, but got %t.\n", test.key, test.expected, got)
+		}
+	}
+}
+
+func TestBytes(t *testing.T) {
+	data := Data(map[string][]string{
+		"name":       []string{"bob", "bill"},
+		"profession": []string{"plumber"},
+	})
+
+	table := []struct {
+		key      string
+		expected []byte
+	}{
+		{
+			key:      "name",
+			expected: []byte("bob"),
+		},
+		{
+			key:      "profession",
+			expected: []byte("plumber"),
+		},
+		{
+			key:      "favoriteColor",
+			expected: []byte(""),
+		},
+	}
+
+	for _, test := range table {
+		got := data.GetBytes(test.key)
+		if len(got) == 0 && len(test.expected) == 0 {
+			// do nothing
+			// reflect.DeepEqual doesn't like when both lengths are zero, but it should pass.
+		} else if !reflect.DeepEqual(got, test.expected) {
+			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expected, got)
 		}
 	}
 }

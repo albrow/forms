@@ -3,6 +3,7 @@ package data
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -153,6 +154,45 @@ func (v *Validator) matchError(key string, msg ...string) {
 		v.Error(key, msg[0])
 	} else {
 		err := fmt.Sprintf("%s must be correctly formatted.", key)
+		v.Error(key, err)
+	}
+}
+
+// TypeInt will add an error to the Validator if the first
+// element of data[key] cannot be converted to an int.
+func (v *Validator) TypeInt(key string, msg ...string) {
+	if _, err := strconv.Atoi(v.data.Get(key)); err != nil {
+		v.typeError(key, "integer", msg...)
+	}
+}
+
+// TypeFloat will add an error to the Validator if the first
+// element of data[key] cannot be converted to an float64.
+func (v *Validator) TypeFloat(key string, msg ...string) {
+	if _, err := strconv.ParseFloat(v.data.Get(key), 64); err != nil {
+		// note: "number" is a more natural colloquial term than "float"
+		v.typeError(key, "number", msg...)
+	}
+}
+
+// TypeBool will add an error to the Validator if the first
+// element of data[key] cannot be converted to a bool.
+func (v *Validator) TypeBool(key string, msg ...string) {
+	if _, err := strconv.ParseBool(v.data.Get(key)); err != nil {
+		// note: "true or false" is a more natural colloquial term than "bool"
+		v.typeError(key, "true or false", msg...)
+	}
+}
+
+func (v *Validator) typeError(key string, typ string, msg ...string) {
+	if len(msg) != 0 {
+		v.Error(key, msg[0])
+	} else {
+		article := "a"
+		if strings.Contains("aeiou", string(typ[0])) {
+			article = "an"
+		}
+		err := fmt.Sprintf("%s must be %s %s", key, article, typ)
 		v.Error(key, err)
 	}
 }

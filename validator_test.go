@@ -144,6 +144,58 @@ func TestMatchEmail(t *testing.T) {
 	}
 }
 
+func TestTypeInt(t *testing.T) {
+	data := Data{}
+	data.Add("age", "23")
+	data.Add("weight", "not a number")
+	val := data.Validator()
+	val.TypeInt("age")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+	}
+
+	val.TypeInt("weight")
+	if len(val.Errors) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	}
+}
+
+func TestTypeFloat(t *testing.T) {
+	data := Data{}
+	data.Add("age", "23")
+	data.Add("weight", "155.8")
+	data.Add("favoriteNumber", "not a number")
+	val := data.Validator()
+	val.TypeFloat("age")
+	val.TypeFloat("weight")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+	}
+
+	val.TypeFloat("favoriteNumber")
+	if len(val.Errors) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	}
+}
+
+func TestTypeBool(t *testing.T) {
+	data := Data{}
+	data.Add("cool", "true")
+	data.Add("fun", "false")
+	data.Add("yes", "not a boolean")
+	val := data.Validator()
+	val.TypeBool("cool")
+	val.TypeBool("fun")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+	}
+
+	val.TypeBool("yes")
+	if len(val.Errors) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	}
+}
+
 func ExampleValidator() {
 	// Construct a request object for example purposes only.
 	// Typically you would be using this inside a http.HandlerFunc,

@@ -1,6 +1,7 @@
 package data
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -212,6 +213,90 @@ func TestGetStringsSplit(t *testing.T) {
 		} else if !reflect.DeepEqual(gots, test.expecteds) {
 			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expecteds, gots)
 		}
+	}
+}
+
+func TestParseJSON(t *testing.T) {
+	// Construct and parse a json request
+	input := `{
+		"name": "bob",
+		"age": 25,
+		"cool": true,
+		"aptitude": null,
+		"location": {"latitude": 123.456, "longitude": 948.123},
+		"things": ["a", "b", "c"]
+	}`
+	body := bytes.NewBuffer([]byte(input))
+	req, err := http.NewRequest("POST", "/", body)
+	if err != nil {
+		t.Error(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	d, err := Parse(req)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// use a table for testing
+	table := []struct {
+		key      string
+		got      interface{}
+		expected interface{}
+	}{
+		{
+			key:      "name",
+			got:      d.Get("name"),
+			expected: "bob",
+		},
+		{
+			key:      "age",
+			got:      d.GetFloat("age"),
+			expected: 25.0,
+		},
+		{
+			key:      "cool",
+			got:      d.GetBool("cool"),
+			expected: true,
+		},
+		{
+			key:      "aptitude",
+			got:      d.Get("aptitude"),
+			expected: "",
+		},
+	}
+	for _, test := range table {
+		if !reflect.DeepEqual(test.got, test.expected) {
+			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expected, test.got)
+		}
+	}
+
+	// Test unmarshaling into data structures separately
+	// For maps, both the GetMapFromJSON method and the GetAndMarshalJSON method
+	expectedMap := map[string]interface{}{"latitude": 123.456, "longitude": 948.123}
+	if got, err := d.GetMapFromJSON("location"); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(got, expectedMap) {
+		t.Errorf("location was incorrect. Expected %v, but got %v.\n", expectedMap, got)
+	}
+	gotMap := map[string]interface{}{}
+	if err := d.GetAndMarshalJSON("location", &gotMap); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(gotMap, expectedMap) {
+		t.Errorf("location was incorrect. Expected %v, but got %v.\n", expectedMap, gotMap)
+	}
+
+	// For slices, both the GetSliceFromJSON method and the GetAndMarshalJSON method
+	expectedSlice := []interface{}{"a", "b", "c"}
+	if got, err := d.GetSliceFromJSON("things"); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(got, expectedSlice) {
+		t.Errorf("things was incorrect. Expected %v, but got %v.\n", expectedSlice, got)
+	}
+	gotSlice := []interface{}{}
+	if err := d.GetAndMarshalJSON("things", &gotSlice); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(gotSlice, expectedSlice) {
+		t.Errorf("things was incorrect. Expected %v, but got %v.\n", expectedSlice, gotSlice)
 	}
 }
 

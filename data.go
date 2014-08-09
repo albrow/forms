@@ -1,6 +1,9 @@
 package data
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -40,6 +43,10 @@ func Parse(req *http.Request) (Data, error) {
 				values.Add(key, val)
 			}
 		}
+	} else if strings.Contains(contentType, "application/json") {
+		if err := parseJSON(values, req); err != nil {
+			return nil, err
+		}
 	}
 	for key, vals := range req.URL.Query() {
 		for _, val := range vals {
@@ -47,6 +54,37 @@ func Parse(req *http.Request) (Data, error) {
 		}
 	}
 	return Data(values), nil
+}
+
+func parseJSON(values url.Values, req *http.Request) error {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return err
+	}
+	rawData := map[string]interface{}{}
+	if err := json.Unmarshal(body, &rawData); err != nil {
+		return err
+	}
+	// Whatever the underlying type is, we need to convert it to a
+	// string. There are only a few possible types, so we can just
+	// do a type switch over the possibilities.
+	for key, val := range rawData {
+		switch val.(type) {
+		case string, bool, float64:
+			values.Add(key, fmt.Sprint(val))
+		case nil:
+			values.Add(key, "")
+		case map[string]interface{}, []interface{}:
+			// for more complicated data structures, convert back to
+			// a JSON string and let user decide how to unmarshal
+			jsonVal, err := json.Marshal(val)
+			if err != nil {
+				return err
+			}
+			values.Add(key, string(jsonVal))
+		}
+	}
+	return nil
 }
 
 // Add adds the value to key. It appends to any existing values associated with key.
@@ -133,6 +171,46 @@ func (d Data) GetStringsSplit(key string, delim string) []string {
 		return nil
 	}
 	return strings.Split(d[key][0], delim)
+}
+
+// GetMapFromJSON assumes that the first element in data[key] is a json string, attempts to
+// unmarshal it into a map[string]interface{}, and if successful, returns the result. If
+// unmarshaling was not successful, returns an error.
+func (d Data) GetMapFromJSON(key string) (map[string]interface{}, error) {
+	if !d.KeyExists(key) || len(d[key]) == 0 {
+		return nil, nil
+	}
+	result := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(d.Get(key)), &result); err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
+// GetSliceFromJSON assumes that the first element in data[key] is a json string, attempts to
+// unmarshal it into a []interface{}, and if successful, returns the result. If unmarshaling
+// was not successful, returns an error.
+func (d Data) GetSliceFromJSON(key string) ([]interface{}, error) {
+	if !d.KeyExists(key) || len(d[key]) == 0 {
+		return nil, nil
+	}
+	result := []interface{}{}
+	if err := json.Unmarshal([]byte(d.Get(key)), &result); err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+
+// GetAndMarshalJSON assumes that the first element in data[key] is a json string and
+// attempts to unmarshal it into v. If unmarshaling was not successful, returns an error.
+// v should be a pointer to some data structure.
+func (d Data) GetAndMarshalJSON(key string, v interface{}) error {
+	if err := json.Unmarshal([]byte(d.Get(key)), v); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Validator returns a Validator which can be used to easily validate data.

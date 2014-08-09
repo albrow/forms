@@ -8,6 +8,32 @@ import (
 	"testing"
 )
 
+func TestCustomMessage(t *testing.T) {
+	data := Data{}
+	val := data.Validator()
+	customMsg := "You forgot to include name!"
+	val.Require("name").Message(customMsg)
+
+	if !val.HasErrors() {
+		t.Error("Expected an error but got none.")
+	} else if val.Messages()[0] != customMsg {
+		t.Errorf("Expected custom error message \"%s\" but got \"%s\"", customMsg, val.Messages()[0])
+	}
+}
+
+func TestCustomField(t *testing.T) {
+	data := Data{}
+	val := data.Validator()
+	customField := "person.name"
+	val.Require("name").Field(customField)
+
+	if !val.HasErrors() {
+		t.Error("Expected an error but got none.")
+	} else if val.Fields()[0] != customField {
+		t.Errorf("Expected custom field name \"%s\" but got \"%s\"", customField, val.Fields()[0])
+	}
+}
+
 func TestRequire(t *testing.T) {
 	data := Data{}
 	data.Add("name", "Bob")
@@ -18,13 +44,13 @@ func TestRequire(t *testing.T) {
 	val.Require("name")
 	val.Require("age")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.Require("color")
 	val.Require("a")
-	if len(val.Errors) != 2 {
-		t.Errorf("Expected 2 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -38,11 +64,11 @@ func TestMinLength(t *testing.T) {
 	val.MinLength("one", 1)
 	val.MinLength("three", 3)
 	if val.HasErrors() {
-		t.Error("Expected no errors but got errors: %v", val.Errors)
+		t.Error("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.MinLength("five", 5)
-	if len(val.Errors) != 1 {
+	if len(val.Messages()) != 1 {
 		t.Error("Expected a validation error.")
 	}
 }
@@ -56,11 +82,11 @@ func TestMaxLength(t *testing.T) {
 	val.MaxLength("one", 1)
 	val.MaxLength("three", 3)
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.MaxLength("five", 5)
-	if len(val.Errors) != 1 {
+	if len(val.Messages()) != 1 {
 		t.Error("Expected a validation error.")
 	}
 }
@@ -76,13 +102,13 @@ func TestLengthRange(t *testing.T) {
 	val.LengthRange("one-two", 1, 2)
 	val.LengthRange("two-three", 2, 3)
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.LengthRange("three-four", 3, 4)
 	val.LengthRange("four-five", 4, 5)
-	if len(val.Errors) != 2 {
-		t.Errorf("Expected 2 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -95,11 +121,11 @@ func TestEqual(t *testing.T) {
 	val := data.Validator()
 	val.Equal("password", "confirmPassword")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.Equal("password", "nonMatching")
-	if len(val.Errors) != 1 {
+	if len(val.Messages()) != 1 {
 		t.Error("Expected a validation error.")
 	}
 }
@@ -117,13 +143,13 @@ func TestMatch(t *testing.T) {
 	val.Match("numeric", numericRegex)
 	val.Match("alpha", alphaRegex)
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.Match("not-numeric", numericRegex)
 	val.Match("not-alpha", alphaRegex)
-	if len(val.Errors) != 2 {
-		t.Errorf("Expected 2 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -134,13 +160,13 @@ func TestMatchEmail(t *testing.T) {
 	val := data.Validator()
 	val.MatchEmail("email")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.MatchEmail("not-email")
 	val.MatchEmail("nothing")
-	if len(val.Errors) != 2 {
-		t.Errorf("Expected 2 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -151,12 +177,12 @@ func TestTypeInt(t *testing.T) {
 	val := data.Validator()
 	val.TypeInt("age")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.TypeInt("weight")
-	if len(val.Errors) != 1 {
-		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -169,12 +195,12 @@ func TestTypeFloat(t *testing.T) {
 	val.TypeFloat("age")
 	val.TypeFloat("weight")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.TypeFloat("favoriteNumber")
-	if len(val.Errors) != 1 {
-		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -187,12 +213,12 @@ func TestTypeBool(t *testing.T) {
 	val.TypeBool("cool")
 	val.TypeBool("fun")
 	if val.HasErrors() {
-		t.Errorf("Expected no errors but got errors: %v", val.Errors)
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
 	}
 
 	val.TypeBool("yes")
-	if len(val.Errors) != 1 {
-		t.Errorf("Expected 1 validation errors but got %d.", len(val.Errors))
+	if len(val.Messages()) != 1 {
+		t.Errorf("Expected 1 validation errors but got %d.", len(val.Messages()))
 	}
 }
 
@@ -216,12 +242,12 @@ func ExampleValidator() {
 	val.MinLength("name", 4)
 	val.Require("age")
 
-	// Here's how you can include a custom error message.
-	val.Require("retired", "Must specify whether or not person is retired.")
+	// Here's how you can change the error message or field name
+	val.Require("retired").Field("retired_status").Message("Must specify whether or not person is retired.")
 
 	// Check for validation errors and print them if there are any.
 	if val.HasErrors() {
-		fmt.Printf("%#v\n", val.Errors)
+		fmt.Printf("%#v\n", val.Messages())
 	}
 
 	// Output:

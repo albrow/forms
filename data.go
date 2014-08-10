@@ -203,10 +203,10 @@ func (d Data) GetSliceFromJSON(key string) ([]interface{}, error) {
 	}
 }
 
-// GetAndMarshalJSON assumes that the first element in data[key] is a json string and
+// GetAndUnmarshalJSON assumes that the first element in data[key] is a json string and
 // attempts to unmarshal it into v. If unmarshaling was not successful, returns an error.
 // v should be a pointer to some data structure.
-func (d Data) GetAndMarshalJSON(key string, v interface{}) error {
+func (d Data) GetAndUnmarshalJSON(key string, v interface{}) error {
 	if err := json.Unmarshal([]byte(d.Get(key)), v); err != nil {
 		return err
 	}

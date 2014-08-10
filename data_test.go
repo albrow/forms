@@ -271,7 +271,7 @@ func TestParseJSON(t *testing.T) {
 	}
 
 	// Test unmarshaling into data structures separately
-	// For maps, both the GetMapFromJSON method and the GetAndMarshalJSON method
+	// For maps, both the GetMapFromJSON method and the GetAndUnmarshalJSON method
 	expectedMap := map[string]interface{}{"latitude": 123.456, "longitude": 948.123}
 	if got, err := d.GetMapFromJSON("location"); err != nil {
 		t.Error(err)
@@ -279,13 +279,13 @@ func TestParseJSON(t *testing.T) {
 		t.Errorf("location was incorrect. Expected %v, but got %v.\n", expectedMap, got)
 	}
 	gotMap := map[string]interface{}{}
-	if err := d.GetAndMarshalJSON("location", &gotMap); err != nil {
+	if err := d.GetAndUnmarshalJSON("location", &gotMap); err != nil {
 		t.Error(err)
 	} else if !reflect.DeepEqual(gotMap, expectedMap) {
 		t.Errorf("location was incorrect. Expected %v, but got %v.\n", expectedMap, gotMap)
 	}
 
-	// For slices, both the GetSliceFromJSON method and the GetAndMarshalJSON method
+	// For slices, both the GetSliceFromJSON method and the GetAndUnmarshalJSON method
 	expectedSlice := []interface{}{"a", "b", "c"}
 	if got, err := d.GetSliceFromJSON("things"); err != nil {
 		t.Error(err)
@@ -293,7 +293,7 @@ func TestParseJSON(t *testing.T) {
 		t.Errorf("things was incorrect. Expected %v, but got %v.\n", expectedSlice, got)
 	}
 	gotSlice := []interface{}{}
-	if err := d.GetAndMarshalJSON("things", &gotSlice); err != nil {
+	if err := d.GetAndUnmarshalJSON("things", &gotSlice); err != nil {
 		t.Error(err)
 	} else if !reflect.DeepEqual(gotSlice, expectedSlice) {
 		t.Errorf("things was incorrect. Expected %v, but got %v.\n", expectedSlice, gotSlice)

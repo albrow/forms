@@ -61,6 +61,10 @@ func parseJSON(values url.Values, req *http.Request) error {
 	if err != nil {
 		return err
 	}
+	if len(body) == 0 {
+		// don't attempt to parse empty bodies
+		return nil
+	}
 	rawData := map[string]interface{}{}
 	if err := json.Unmarshal(body, &rawData); err != nil {
 		return err

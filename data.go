@@ -56,6 +56,16 @@ func Parse(req *http.Request) (Data, error) {
 	return Data(values), nil
 }
 
+// CreateFromMap returns a Data object with keys and values matching
+// the map.
+func CreateFromMap(m map[string]string) Data {
+	values := url.Values{}
+	for key, value := range m {
+		values.Add(key, value)
+	}
+	return Data(values)
+}
+
 func parseJSON(values url.Values, req *http.Request) error {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {

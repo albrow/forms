@@ -177,6 +177,40 @@ func TestBytes(t *testing.T) {
 	}
 }
 
+func TestCreateFromMap(t *testing.T) {
+	m := map[string]string{
+		"name":          "bob",
+		"age":           "25",
+		"favoriteColor": "fuchsia",
+	}
+	data := CreateFromMap(m)
+
+	table := []struct {
+		key      string
+		expected string
+	}{
+		{
+			key:      "name",
+			expected: "bob",
+		},
+		{
+			key:      "age",
+			expected: "25",
+		},
+		{
+			key:      "dreamJob",
+			expected: "",
+		},
+	}
+
+	for _, test := range table {
+		got := data.Get(test.key)
+		if got != test.expected {
+			t.Errorf("%s was incorrect. Expected %s, but got %s.\n", test.key, test.expected, got)
+		}
+	}
+}
+
 func TestGetStringsSplit(t *testing.T) {
 	data := Data(map[string][]string{
 		"children":       []string{"martha,bill,jane", "adam,julia"},

@@ -199,7 +199,7 @@ func (v *Validator) Match(field string, regex *regexp.Regexp) *ValidationResult 
 
 // MatchEmail will add an error to the Validator if data[field]
 // does not match the formatting expected of an email.
-func (v *Validator) MatchEmail(field string, msg ...string) *ValidationResult {
+func (v *Validator) MatchEmail(field string) *ValidationResult {
 	regex := regexp.MustCompile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?$")
 	return v.Match(field, regex)
 }

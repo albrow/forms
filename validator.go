@@ -249,3 +249,62 @@ func (v *Validator) addTypeError(field string, typ string) *ValidationResult {
 	msg := fmt.Sprintf("%s must be %s %s", field, article, typ)
 	return v.AddError(field, msg)
 }
+
+// Greater will add an error to the Validator if the first
+// element of data[field] is not greater than value or if the first
+// element of data[field] cannot be converted to a number.
+func (v *Validator) Greater(field string, value float64) *ValidationResult {
+	return v.inequality(field, value, greater, "greater than")
+}
+
+// GreaterOrEqual will add an error to the Validator if the first
+// element of data[field] is not greater than or equal to value or if
+// the first element of data[field] cannot be converted to a number.
+func (v *Validator) GreaterOrEqual(field string, value float64) *ValidationResult {
+	return v.inequality(field, value, greaterOrEqual, "greater than or equal to")
+}
+
+// Less will add an error to the Validator if the first
+// element of data[field] is not less than value or if the first
+// element of data[field] cannot be converted to a number.
+func (v *Validator) Less(field string, value float64) *ValidationResult {
+	return v.inequality(field, value, less, "less than")
+}
+
+// LessOrEqual will add an error to the Validator if the first
+// element of data[field] is not less than or equal to value or if
+// the first element of data[field] cannot be converted to a number.
+func (v *Validator) LessOrEqual(field string, value float64) *ValidationResult {
+	return v.inequality(field, value, lessOrEqual, "less than or equal to")
+}
+
+type conditional func(given float64, target float64) bool
+
+var greater conditional = func(given float64, target float64) bool {
+	return given > target
+}
+
+var greaterOrEqual conditional = func(given float64, target float64) bool {
+	return given >= target
+}
+
+var less conditional = func(given float64, target float64) bool {
+	return given < target
+}
+
+var lessOrEqual conditional = func(given float64, target float64) bool {
+	return given <= target
+}
+
+func (v *Validator) inequality(field string, value float64, condition conditional, explanation string) *ValidationResult {
+	if valFloat, err := strconv.ParseFloat(v.data.Get(field), 64); err != nil {
+		// note: "number" is a more natural colloquial term than "float"
+		return v.addTypeError(field, "number")
+	} else {
+		if !condition(valFloat, value) {
+			return v.AddError(field, fmt.Sprintf("%s must be %s %f.", field, explanation, value))
+		} else {
+			return &ValidationResult{Ok: true}
+		}
+	}
+}

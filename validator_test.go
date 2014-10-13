@@ -222,6 +222,78 @@ func TestTypeBool(t *testing.T) {
 	}
 }
 
+func TestGreater(t *testing.T) {
+	data := Data{}
+	data.Add("one", "1")
+	data.Add("three", "3")
+	val := data.Validator()
+	val.Greater("one", -1)
+	val.Greater("three", 2)
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
+	}
+
+	val.Greater("one", 1)
+	val.Greater("three", 4)
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
+func TestGreaterOrEqual(t *testing.T) {
+	data := Data{}
+	data.Add("one", "1")
+	data.Add("three", "3")
+	val := data.Validator()
+	val.GreaterOrEqual("one", 1)
+	val.GreaterOrEqual("three", 2)
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
+	}
+
+	val.GreaterOrEqual("one", 2)
+	val.GreaterOrEqual("three", 4)
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
+func TestLess(t *testing.T) {
+	data := Data{}
+	data.Add("one", "1")
+	data.Add("three", "3")
+	val := data.Validator()
+	val.Less("one", 2)
+	val.Less("three", 4)
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
+	}
+
+	val.Less("one", -1)
+	val.Less("three", 3)
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
+func TestLessOrEqual(t *testing.T) {
+	data := Data{}
+	data.Add("one", "1")
+	data.Add("three", "3")
+	val := data.Validator()
+	val.LessOrEqual("one", 1)
+	val.LessOrEqual("three", 4)
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
+	}
+
+	val.LessOrEqual("one", -1)
+	val.LessOrEqual("three", 2)
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
 func ExampleValidator() {
 	// Construct a request object for example purposes only.
 	// Typically you would be using this inside a http.HandlerFunc,

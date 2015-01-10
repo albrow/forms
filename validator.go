@@ -14,7 +14,7 @@ import (
 // that validator (e.g. Require), check if the validator
 // has errors, then do something with the errors if it does.
 type Validator struct {
-	data    Data
+	data    *Data
 	results []*ValidationResult
 }
 

@@ -300,7 +300,7 @@ func (d Data) GetAndUnmarshalJSON(key string, v interface{}) error {
 }
 
 // Validator returns a Validator which can be used to easily validate data.
-func (d Data) Validator() *Validator {
+func (d *Data) Validator() *Validator {
 	return &Validator{
 		data: d,
 	}

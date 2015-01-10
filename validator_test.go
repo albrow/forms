@@ -9,7 +9,7 @@ import (
 )
 
 func TestCustomMessage(t *testing.T) {
-	data := Data{}
+	data := newData()
 	val := data.Validator()
 	customMsg := "You forgot to include name!"
 	val.Require("name").Message(customMsg)
@@ -22,7 +22,7 @@ func TestCustomMessage(t *testing.T) {
 }
 
 func TestCustomField(t *testing.T) {
-	data := Data{}
+	data := newData()
 	val := data.Validator()
 	customField := "person.name"
 	val.Require("name").Field(customField)
@@ -35,7 +35,7 @@ func TestCustomField(t *testing.T) {
 }
 
 func TestRequire(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("name", "Bob")
 	data.Add("age", "25")
 	data.Add("color", "")
@@ -55,7 +55,7 @@ func TestRequire(t *testing.T) {
 }
 
 func TestMinLength(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "A")
 	data.Add("three", "ABC")
 	data.Add("five", "ABC")
@@ -74,7 +74,7 @@ func TestMinLength(t *testing.T) {
 }
 
 func TestMaxLength(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "A")
 	data.Add("three", "ABC")
 	data.Add("five", "ABCDEF")
@@ -92,7 +92,7 @@ func TestMaxLength(t *testing.T) {
 }
 
 func TestLengthRange(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one-two", "a")
 	data.Add("two-three", "abc")
 	data.Add("three-four", "ab")
@@ -113,7 +113,7 @@ func TestLengthRange(t *testing.T) {
 }
 
 func TestEqual(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("password", "password123")
 	data.Add("confirmPassword", "password123")
 	data.Add("nonMatching", "password1234")
@@ -131,7 +131,7 @@ func TestEqual(t *testing.T) {
 }
 
 func TestMatch(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("numeric", "123")
 	data.Add("alpha", "abc")
 	data.Add("not-numeric", "123a")
@@ -154,7 +154,7 @@ func TestMatch(t *testing.T) {
 }
 
 func TestMatchEmail(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("email", "abc@example.com")
 	data.Add("not-email", "abc.com")
 	val := data.Validator()
@@ -171,7 +171,7 @@ func TestMatchEmail(t *testing.T) {
 }
 
 func TestTypeInt(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("age", "23")
 	data.Add("weight", "not a number")
 	val := data.Validator()
@@ -187,7 +187,7 @@ func TestTypeInt(t *testing.T) {
 }
 
 func TestTypeFloat(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("age", "23")
 	data.Add("weight", "155.8")
 	data.Add("favoriteNumber", "not a number")
@@ -205,7 +205,7 @@ func TestTypeFloat(t *testing.T) {
 }
 
 func TestTypeBool(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("cool", "true")
 	data.Add("fun", "false")
 	data.Add("yes", "not a boolean")
@@ -223,7 +223,7 @@ func TestTypeBool(t *testing.T) {
 }
 
 func TestGreater(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "1")
 	data.Add("three", "3")
 	val := data.Validator()
@@ -241,7 +241,7 @@ func TestGreater(t *testing.T) {
 }
 
 func TestGreaterOrEqual(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "1")
 	data.Add("three", "3")
 	val := data.Validator()
@@ -259,7 +259,7 @@ func TestGreaterOrEqual(t *testing.T) {
 }
 
 func TestLess(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "1")
 	data.Add("three", "3")
 	val := data.Validator()
@@ -277,7 +277,7 @@ func TestLess(t *testing.T) {
 }
 
 func TestLessOrEqual(t *testing.T) {
-	data := Data{}
+	data := newData()
 	data.Add("one", "1")
 	data.Add("three", "3")
 	val := data.Validator()

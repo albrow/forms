@@ -3,17 +3,23 @@ package data
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
 func TestGet(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"name":       []string{"bob", "bill"},
 		"profession": []string{"plumber"},
-	})
+	}
 
 	table := []struct {
 		key      string
@@ -42,10 +48,11 @@ func TestGet(t *testing.T) {
 }
 
 func TestGetInt(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"age":    []string{"25", "33"},
 		"weight": []string{"155"},
-	})
+	}
 
 	table := []struct {
 		key      string
@@ -74,10 +81,11 @@ func TestGetInt(t *testing.T) {
 }
 
 func TestGetFloat(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"age":    []string{"25.7", "33"},
 		"weight": []string{"42"},
-	})
+	}
 
 	table := []struct {
 		key      string
@@ -106,11 +114,12 @@ func TestGetFloat(t *testing.T) {
 }
 
 func TestGetBool(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"retired":         []string{"true", "false"},
 		"leftHanded":      []string{"0"},
 		"collegeGraduate": []string{"1"},
-	})
+	}
 
 	table := []struct {
 		key      string
@@ -143,10 +152,11 @@ func TestGetBool(t *testing.T) {
 }
 
 func TestBytes(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"name":       []string{"bob", "bill"},
 		"profession": []string{"plumber"},
-	})
+	}
 
 	table := []struct {
 		key      string
@@ -212,10 +222,11 @@ func TestCreateFromMap(t *testing.T) {
 }
 
 func TestGetStringsSplit(t *testing.T) {
-	data := Data(map[string][]string{
+	data := newData()
+	data.Values = map[string][]string{
 		"children":       []string{"martha,bill,jane", "adam,julia"},
 		"favoriteColors": []string{"blue%20green%20fuchsia"},
-	})
+	}
 
 	table := []struct {
 		key       string
@@ -246,6 +257,150 @@ func TestGetStringsSplit(t *testing.T) {
 			// reflect.DeepEqual doesn't like when both lengths are zero, but it should pass.
 		} else if !reflect.DeepEqual(gots, test.expecteds) {
 			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expecteds, gots)
+		}
+	}
+}
+
+func TestParseUrlEncoded(t *testing.T) {
+	// Construct a urlencoded form request
+	// Add some simple key-value params to the form
+	fieldData := map[string]string{
+		"name":           "Bob",
+		"age":            "25",
+		"favoriteNumber": "99.99",
+		"leftHanded":     "true",
+	}
+	values := url.Values{}
+	for fieldname, value := range fieldData {
+		values.Add(fieldname, value)
+	}
+	req, err := http.NewRequest("POST", "/", strings.NewReader(values.Encode()))
+	if err != nil {
+		t.Error(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	// Parse the request
+	d, err := Parse(req)
+	if err != nil {
+		t.Error(err)
+	}
+	testBasicFormFields(t, d)
+}
+
+func TestParseMultipart(t *testing.T) {
+	// Construct a multipart request
+	body := bytes.NewBuffer([]byte{})
+	form := multipart.NewWriter(body)
+
+	// Add some simple key-value params to the form
+	fieldData := map[string]string{
+		"name":           "Bob",
+		"age":            "25",
+		"favoriteNumber": "99.99",
+		"leftHanded":     "true",
+	}
+	for fieldname, value := range fieldData {
+		if err := form.WriteField(fieldname, value); err != nil {
+			panic(err)
+		}
+	}
+
+	// Add a file to the form
+	testFile, err := os.Open("test_file.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	defer testFile.Close()
+	fileWriter, err := form.CreateFormFile("file", "test_file.txt")
+	if err != nil {
+		panic(err)
+	}
+	if _, err := io.Copy(fileWriter, testFile); err != nil {
+		panic(err)
+	}
+	// Close the form to finish writing
+	if err := form.Close(); err != nil {
+		panic(err)
+	}
+
+	req, err := http.NewRequest("POST", "/", body)
+	if err != nil {
+		t.Error(err)
+	}
+	req.Header.Add("Content-Type", "multipart/form-data; boundary="+form.Boundary())
+
+	// Parse the request
+	d, err := Parse(req)
+	if err != nil {
+		t.Error(err)
+	}
+	testBasicFormFields(t, d)
+
+	// Next test that the file was parsed correctly
+	if !d.FileExists("file") {
+		t.Error("Expected FileExists() to return true but it returned false.")
+	}
+	header := d.GetFile("file")
+	if header == nil {
+		t.Error("Exected GetFile() to return a *multipart.FileHeader but got nil.")
+	}
+	if header.Filename != "test_file.txt" {
+		t.Errorf(`Expected header.Filename to equal "test_file.txt" but got %s`, header.Filename)
+	}
+	file, err := header.Open()
+	if err != nil {
+		t.Error(err)
+	}
+	gotBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(gotBytes) != "Hello!" {
+		t.Errorf(`Expected file contents when read directly to be "Hello!" but got %s`, string(gotBytes))
+	}
+	gotBytes, err = d.GetFileBytes("file")
+	if err != nil {
+		t.Error(err)
+	}
+	if string(gotBytes) != "Hello!" {
+		t.Errorf(`Expected GetFileBytes("file") to return "Hello!" but got %s`, string(gotBytes))
+	}
+}
+
+// Used for testing multipart and urlencoded form data, since both tests expect the same data
+// to be present.
+func testBasicFormFields(t *testing.T, d *Data) {
+	// use a table for testing
+	fields := []struct {
+		key      string
+		got      interface{}
+		expected interface{}
+	}{
+		{
+			key:      "name",
+			got:      d.Get("name"),
+			expected: "Bob",
+		},
+		{
+			key:      "age",
+			got:      d.GetInt("age"),
+			expected: 25,
+		},
+		{
+			key:      "favoriteNumber",
+			got:      d.GetFloat("favoriteNumber"),
+			expected: 99.99,
+		},
+		{
+			key:      "leftHanded",
+			got:      d.GetBool("leftHanded"),
+			expected: true,
+		},
+	}
+	for _, test := range fields {
+		if !reflect.DeepEqual(test.got, test.expected) {
+			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expected, test.got)
 		}
 	}
 }

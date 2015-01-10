@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,6 +28,8 @@ type ValidationResult struct {
 	field   string
 	message string
 }
+
+var validationOk = &ValidationResult{Ok: true}
 
 // Field changes the field name associated with the validation result.
 func (vr *ValidationResult) Field(field string) *ValidationResult {
@@ -96,15 +99,31 @@ func (v *Validator) ErrorMap() map[string][]string {
 	return errMap
 }
 
-// Require will add an error to the Validator if data[field]
+// Require will add an error to the Validator if data.Values[field]
 // does not exist, is an empty string, or consists of only
 // whitespace.
 func (v *Validator) Require(field string) *ValidationResult {
 	if strings.TrimSpace(v.data.Get(field)) == "" {
 		return v.addRequiredError(field)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
+}
+
+// RequireFile will add an error to the Validator if data.Files[field]
+// does not exist or is an empty file
+func (v *Validator) RequireFile(field string) *ValidationResult {
+	if !v.data.FileExists(field) {
+		return v.addRequiredError(field)
+	}
+	bytes, err := v.data.GetFileBytes(field)
+	if err != nil {
+		return v.AddError(field, "Could not read file.")
+	}
+	if len(bytes) == 0 {
+		return v.addFileEmptyError(field)
+	}
+	return validationOk
 }
 
 func (v *Validator) addRequiredError(field string) *ValidationResult {
@@ -112,8 +131,13 @@ func (v *Validator) addRequiredError(field string) *ValidationResult {
 	return v.AddError(field, msg)
 }
 
-// MinLength will add an error to the Validator if data[field]
-// is shorter than length (if data[field] has less than
+func (v *Validator) addFileEmptyError(field string) *ValidationResult {
+	msg := fmt.Sprintf("%s is required and cannot be an empty file.", field)
+	return v.AddError(field, msg)
+}
+
+// MinLength will add an error to the Validator if data.Values[field]
+// is shorter than length (if data.Values[field] has less than
 // length characters), not counting leading or trailing
 // whitespace.
 func (v *Validator) MinLength(field string, length int) *ValidationResult {
@@ -122,7 +146,7 @@ func (v *Validator) MinLength(field string, length int) *ValidationResult {
 	if len(trimmed) < length {
 		return v.addMinLengthError(field, length)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
@@ -131,8 +155,8 @@ func (v *Validator) addMinLengthError(field string, length int) *ValidationResul
 	return v.AddError(field, msg)
 }
 
-// MaxLength will add an error to the Validator if data[field]
-// is longer than length (if data[field] has more than
+// MaxLength will add an error to the Validator if data.Values[field]
+// is longer than length (if data.Values[field] has more than
 // length characters), not counting leading or trailing
 // whitespace.
 func (v *Validator) MaxLength(field string, length int) *ValidationResult {
@@ -141,7 +165,7 @@ func (v *Validator) MaxLength(field string, length int) *ValidationResult {
 	if len(trimmed) > length {
 		return v.addMaxLengthError(field, length)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
@@ -150,16 +174,16 @@ func (v *Validator) addMaxLengthError(field string, length int) *ValidationResul
 	return v.AddError(field, msg)
 }
 
-// LengthRange will add an error to the Validator if data[field]
-// is shorter than min (if data[field] has less than
-// min characters) or if data[field] is longer than max
-// (if data[field] has more than max characters), not
+// LengthRange will add an error to the Validator if data.Values[field]
+// is shorter than min (if data.Values[field] has less than
+// min characters) or if data.Values[field] is longer than max
+// (if data.Values[field] has more than max characters), not
 // counting leading or trailing whitespace.
 func (v *Validator) LengthRange(field string, min int, max int) *ValidationResult {
 	if val := v.data.Get(field); len(val) < min || len(val) > max {
 		return v.addLengthRangeError(field, min, max)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
@@ -176,7 +200,7 @@ func (v *Validator) Equal(field1 string, field2 string) *ValidationResult {
 	if val1 != val2 {
 		return v.addEqualError(field1, field2)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
@@ -187,17 +211,17 @@ func (v *Validator) addEqualError(field1 string, field2 string) *ValidationResul
 	return v.AddError(field2, msg)
 }
 
-// Match will add an error to the Validator if data[field] does
+// Match will add an error to the Validator if data.Values[field] does
 // not match the regular expression regex.
 func (v *Validator) Match(field string, regex *regexp.Regexp) *ValidationResult {
 	if !regex.MatchString(v.data.Get(field)) {
 		return v.addMatchError(field)
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
-// MatchEmail will add an error to the Validator if data[field]
+// MatchEmail will add an error to the Validator if data.Values[field]
 // does not match the formatting expected of an email.
 func (v *Validator) MatchEmail(field string) *ValidationResult {
 	regex := regexp.MustCompile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[a-zA-Z0-9](?:[\\w-]*[\\w])?$")
@@ -210,34 +234,34 @@ func (v *Validator) addMatchError(field string) *ValidationResult {
 }
 
 // TypeInt will add an error to the Validator if the first
-// element of data[field] cannot be converted to an int.
+// element of data.Values[field] cannot be converted to an int.
 func (v *Validator) TypeInt(field string) *ValidationResult {
 	if _, err := strconv.Atoi(v.data.Get(field)); err != nil {
 		return v.addTypeError(field, "integer")
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
 // TypeFloat will add an error to the Validator if the first
-// element of data[field] cannot be converted to an float64.
+// element of data.Values[field] cannot be converted to an float64.
 func (v *Validator) TypeFloat(field string) *ValidationResult {
 	if _, err := strconv.ParseFloat(v.data.Get(field), 64); err != nil {
 		// note: "number" is a more natural colloquial term than "float"
 		return v.addTypeError(field, "number")
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
 // TypeBool will add an error to the Validator if the first
-// element of data[field] cannot be converted to a bool.
+// element of data.Values[field] cannot be converted to a bool.
 func (v *Validator) TypeBool(field string) *ValidationResult {
 	if _, err := strconv.ParseBool(v.data.Get(field)); err != nil {
 		// note: "true or false" is a more natural colloquial term than "bool"
 		return v.addTypeError(field, "true or false")
 	} else {
-		return &ValidationResult{Ok: true}
+		return validationOk
 	}
 }
 
@@ -251,29 +275,29 @@ func (v *Validator) addTypeError(field string, typ string) *ValidationResult {
 }
 
 // Greater will add an error to the Validator if the first
-// element of data[field] is not greater than value or if the first
-// element of data[field] cannot be converted to a number.
+// element of data.Values[field] is not greater than value or if the first
+// element of data.Values[field] cannot be converted to a number.
 func (v *Validator) Greater(field string, value float64) *ValidationResult {
 	return v.inequality(field, value, greater, "greater than")
 }
 
 // GreaterOrEqual will add an error to the Validator if the first
-// element of data[field] is not greater than or equal to value or if
-// the first element of data[field] cannot be converted to a number.
+// element of data.Values[field] is not greater than or equal to value or if
+// the first element of data.Values[field] cannot be converted to a number.
 func (v *Validator) GreaterOrEqual(field string, value float64) *ValidationResult {
 	return v.inequality(field, value, greaterOrEqual, "greater than or equal to")
 }
 
 // Less will add an error to the Validator if the first
-// element of data[field] is not less than value or if the first
-// element of data[field] cannot be converted to a number.
+// element of data.Values[field] is not less than value or if the first
+// element of data.Values[field] cannot be converted to a number.
 func (v *Validator) Less(field string, value float64) *ValidationResult {
 	return v.inequality(field, value, less, "less than")
 }
 
 // LessOrEqual will add an error to the Validator if the first
-// element of data[field] is not less than or equal to value or if
-// the first element of data[field] cannot be converted to a number.
+// element of data.Values[field] is not less than or equal to value or if
+// the first element of data.Values[field] cannot be converted to a number.
 func (v *Validator) LessOrEqual(field string, value float64) *ValidationResult {
 	return v.inequality(field, value, lessOrEqual, "less than or equal to")
 }
@@ -304,7 +328,54 @@ func (v *Validator) inequality(field string, value float64, condition conditiona
 		if !condition(valFloat, value) {
 			return v.AddError(field, fmt.Sprintf("%s must be %s %f.", field, explanation, value))
 		} else {
-			return &ValidationResult{Ok: true}
+			return validationOk
 		}
 	}
+}
+
+// AcceptFileExts will add an error to the Validator if the extension
+// of the file identified by field is not in exts. exts should be one ore more
+// allowed file extensions, not including the preceding ".". If the file does not
+// exist, it does not add an error to the Validator.
+func (v *Validator) AcceptFileExts(field string, exts ...string) *ValidationResult {
+	if !v.data.FileExists(field) {
+		return validationOk
+	}
+	header := v.data.GetFile(field)
+	gotExt := filepath.Ext(header.Filename)
+	for _, ext := range exts {
+		if ext == gotExt[1:] {
+			return validationOk
+		}
+	}
+	return v.addFileExtError(field, gotExt, exts...)
+}
+
+func (v *Validator) addFileExtError(field string, gotExt string, allowedExts ...string) *ValidationResult {
+	msg := fmt.Sprintf("The file extension %s is not allowed. Allowed extensions include: ", gotExt)
+
+	// Append each allowed extension to the message, in a human-readable list
+	// e.g. "x, y, and z"
+	for i, ext := range allowedExts {
+		if i == len(allowedExts)-1 {
+			// special case for the last element
+			switch len(allowedExts) {
+			case 1:
+				msg += ext
+			default:
+				msg += fmt.Sprintf("and %s", ext)
+			}
+		} else {
+			// default case for middle elements
+			// we only reach here if there is at least
+			// one element
+			switch len(allowedExts) {
+			case 2:
+				msg += fmt.Sprintf("%s ", ext)
+			default:
+				msg += fmt.Sprintf("%s, ", ext)
+			}
+		}
+	}
+	return v.AddError(field, msg)
 }

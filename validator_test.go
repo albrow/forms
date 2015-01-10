@@ -1,10 +1,13 @@
 package data
 
 import (
+	"bytes"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -52,6 +55,69 @@ func TestRequire(t *testing.T) {
 	if len(val.Messages()) != 2 {
 		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
 	}
+}
+
+func TestRequireFile(t *testing.T) {
+	data := newData()
+	val := data.Validator()
+	val.RequireFile("file")
+	if !val.HasErrors() {
+		t.Error("Expected val to have errors because file was not included but got none.")
+	}
+
+	fileHeader, err := createTestFileHeader("test_file.txt", []byte{})
+	if err != nil {
+		t.Error(err)
+	}
+	data.AddFile("file", fileHeader)
+	val = data.Validator()
+	val.RequireFile("file")
+	if len(val.ErrorMap()) != 1 {
+		t.Errorf("Expected val to have exactly one error because file was empty but got %d.", len(val.ErrorMap()))
+	} else {
+		msg := val.ErrorMap()["file"][0]
+		if !strings.Contains(msg, "empty") {
+			t.Errorf("Expected message to say file was empty but got: %s.", msg)
+		}
+	}
+
+	// Create the multipart file header
+	// Write actual content to it this time
+	fileHeaderWithContent, err := createTestFileHeader("test_file.txt", []byte("Hello!\n"))
+	if err != nil {
+		t.Error(err)
+	}
+	data.AddFile("file", fileHeaderWithContent)
+	val = data.Validator()
+	val.RequireFile("file")
+	if val.HasErrors() {
+		t.Errorf("Expected val to have no errors but got: %v\n", val.ErrorMap())
+	}
+}
+
+func createTestFileHeader(filename string, content []byte) (*multipart.FileHeader, error) {
+	body := bytes.NewBuffer([]byte{})
+	partWriter := multipart.NewWriter(body)
+	fileWriter, err := partWriter.CreateFormFile("file", filename)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := fileWriter.Write(content); err != nil {
+		return nil, err
+	}
+	if err := partWriter.Close(); err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", "/", body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Content-Type", "multipart/form-data; boundary="+partWriter.Boundary())
+	_, fileHeader, err := req.FormFile("file")
+	if err != nil {
+		return nil, err
+	}
+	return fileHeader, nil
 }
 
 func TestMinLength(t *testing.T) {
@@ -291,6 +357,72 @@ func TestLessOrEqual(t *testing.T) {
 	val.LessOrEqual("three", 2)
 	if len(val.Messages()) != 2 {
 		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
+func TestAcceptFileExts(t *testing.T) {
+	data := newData()
+	fileHeader, err := createTestFileHeader("test_file.txt", []byte{})
+	if err != nil {
+		t.Error(err)
+	}
+	data.AddFile("file", fileHeader)
+	val := data.Validator()
+	val.AcceptFileExts("file", "txt")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors for the single allowed ext case but got %v\n", val.ErrorMap())
+	}
+	val = data.Validator()
+	val.AcceptFileExts("file", "txt", "jpg")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors for the multiple allowed ext case but got %v\n", val.ErrorMap())
+	}
+	val = data.Validator()
+	val.AcceptFileExts("foo", "txt")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors for the not-provided field case but got %v\n", val.ErrorMap())
+	}
+
+	// use a table-driven test here
+	table := []struct {
+		allowedExts             []string
+		expectedMessageContains []string
+	}{
+		{
+			allowedExts: []string{"jpg"},
+			expectedMessageContains: []string{
+				"The file extension .txt is not allowed.",
+				"include: jpg",
+			},
+		},
+		{
+			allowedExts: []string{"jpg", "png"},
+			expectedMessageContains: []string{
+				"The file extension .txt is not allowed.",
+				"include: jpg and png",
+			},
+		},
+		{
+			allowedExts: []string{"jpg", "png", "gif"},
+			expectedMessageContains: []string{
+				"The file extension .txt is not allowed.",
+				"include: jpg, png, and gif",
+			},
+		},
+	}
+	for i, test := range table {
+		val = data.Validator()
+		val.AcceptFileExts("file", test.allowedExts...)
+		if !val.HasErrors() {
+			t.Errorf("Expected val to have errors for test case %d but got none.", i)
+			continue // avoid index out-of-bounds error in proceeding lines
+		}
+		gotMsg := val.ErrorMap()["file"][0]
+		for _, expectedMsg := range test.expectedMessageContains {
+			if !strings.Contains(gotMsg, expectedMsg) {
+				t.Errorf(`Expected error in case %d to contain "%s" but it did not.%sGot: "%s"`, i, expectedMsg, "\n", gotMsg)
+			}
+		}
 	}
 }
 

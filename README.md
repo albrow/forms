@@ -49,6 +49,8 @@ func CreateUserHandler(res http.ResponseWriter, req *http.Request) {
 	val.MinLength("password", 8)
 	val.Require("confirmPassword")
 	val.Equal("password", "confirmPassword")
+	val.RequireFile("profileImage")
+	val.AcceptFileExts("profileImage", "jpg", "png", "gif")
 	if val.HasErrors() {
 		// Write the errors to the response
 		// Maybe this means formatting the errors as json
@@ -66,5 +68,15 @@ func CreateUserHandler(res http.ResponseWriter, req *http.Request) {
 	// Continue by saving the user to the database and writing
 	// to the response
 	// ...
+
+
+	// Get the contents of the profileImage file
+	imageBytes, err := userData.GetFileBytes("profileImage")
+	if err != nil {
+	  // Handle err
+	}
+	// Now you can either copy the file over to your server using io.Copy,
+	// upload the file to something like amazon S3, or do whatever you want
+	// with it.
 }
 ```

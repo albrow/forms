@@ -80,3 +80,8 @@ func CreateUserHandler(res http.ResponseWriter, req *http.Request) {
 	// with it.
 }
 ```
+
+License
+-------
+
+Forms is licensed under the MIT License. See the LICENSE file for more information.

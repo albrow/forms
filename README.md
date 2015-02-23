@@ -33,7 +33,7 @@ has access to an http.Request.
 ``` go
 func CreateUserHandler(res http.ResponseWriter, req *http.Request) {
 	// Parse request data.
-	userData, err := data.Parse(req)
+	userData, err := forms.Parse(req)
 	if err != nil {
 		// Handle err
 		// ...

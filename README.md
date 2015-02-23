@@ -1,27 +1,26 @@
-Go Data Parser
-==============
+Forms
+=====
 
-This library parses data from the body and url query paramaters
-of an http.Request and combines it into a single Data object. It
-supports multipart forms, url-encoded forms, and json data in the request.
-It also provides helper methods for converting data into other types
-and a Validator object which can be used to validate the data. It is
-written to be framework-agnostic and works directly with the http
-package.
+Forms is a lightweight, but incredibly useful go library for parsing
+form data from an http.Request. It supports multipart forms, url-encoded
+forms, json data, and url query parameters. It also provides helper methods
+for converting data into other types and a Validator object which can be
+used to validate the data. Forms is framework-agnostic and works directly
+with the http package.
 
-[Full Documentation](http://godoc.org/github.com/albrow/go-data-parser)
+[Full Documentation](http://godoc.org/github.com/albrow/forms)
 
 Installation
 ------------
 
 Install like you would any other package:
 ```
-go get github.com/albrow/go-data-parser
+go get github.com/albrow/forms
 ```
 
 Then include the package in your import statements:
 ``` go
-import "github.com/albrow/go-data-parser"
+import "github.com/albrow/forms"
 ```
 
 Example Usage

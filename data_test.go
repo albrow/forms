@@ -409,6 +409,15 @@ func testBasicFormFields(t *testing.T, d *Data) {
 	}
 }
 
+type jsonData struct {
+	Name     string             `json:"name"`
+	Age      int                `json:"age"`
+	Cool     bool               `json:"cool"`
+	Aptitude string             `json:"aptitude"`
+	Location map[string]float64 `json:"location"`
+	Things   []string           `json:"things"`
+}
+
 func TestParseJSON(t *testing.T) {
 	// Construct and parse a json request
 	input := `{
@@ -461,6 +470,22 @@ func TestParseJSON(t *testing.T) {
 		if !reflect.DeepEqual(test.got, test.expected) {
 			t.Errorf("%s was incorrect. Expected %v, but got %v.\n", test.key, test.expected, test.got)
 		}
+	}
+
+	// Test unmarshaling the entire body to a data structure.
+	expected := jsonData{
+		Name:     "bob",
+		Age:      25,
+		Cool:     true,
+		Aptitude: "",
+		Location: map[string]float64{"latitude": 123.456, "longitude": 948.123},
+		Things:   []string{"a", "b", "c"},
+	}
+	var got jsonData
+	if err := d.BindJSON(&got); err != nil {
+		t.Error(err)
+	} else if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Result of BindJSON was incorrect. Expected %+v, but got %+v.\n", expected, got)
 	}
 
 	// Test unmarshaling into data structures separately

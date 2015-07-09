@@ -34,6 +34,9 @@ type Data struct {
 	// need to have more than one file per key, parse the
 	// files manually using req.MultipartForm.File.
 	Files map[string]*multipart.FileHeader
+	// jsonBody holds the original body of the request.
+	// Only available for json requests.
+	jsonBody []byte
 }
 
 func newData() *Data {
@@ -74,7 +77,12 @@ func Parse(req *http.Request) (*Data, error) {
 			}
 		}
 	} else if strings.Contains(contentType, "application/json") {
-		if err := parseJSON(data.Values, req); err != nil {
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		data.jsonBody = body
+		if err := parseJSON(data.Values, data.jsonBody); err != nil {
 			return nil, err
 		}
 	}
@@ -96,11 +104,7 @@ func CreateFromMap(m map[string]string) *Data {
 	return data
 }
 
-func parseJSON(values url.Values, req *http.Request) error {
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return err
-	}
+func parseJSON(values url.Values, body []byte) error {
 	if len(body) == 0 {
 		// don't attempt to parse empty bodies
 		return nil
@@ -261,6 +265,15 @@ func (d Data) GetStringsSplit(key string, delim string) []string {
 		return nil
 	}
 	return strings.Split(d.Values[key][0], delim)
+}
+
+// BindJSON binds v to the json data in the request body. It calls json.Unmarshal and
+// sets the value of v.
+func (d Data) BindJSON(v interface{}) error {
+	if len(d.jsonBody) == 0 {
+		return nil
+	}
+	return json.Unmarshal(d.jsonBody, v)
 }
 
 // GetMapFromJSON assumes that the first element in data[key] is a json string, attempts to

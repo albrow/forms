@@ -10,6 +10,25 @@ for converting data into other types and a Validator object which can be
 used to validate the data. Forms is framework-agnostic and works directly
 with the http package.
 
+Version 0.1.0
+
+
+Development Status
+------------------
+
+Forms is being actively developed and is well-tested. However, since it is still
+a young library, it is not recommended for use in mission-critical production
+applications at this time. It is probably fine to use for low-traffic hobby
+sites, and in fact we encourage its use in those settings to help polish the API
+and find missing features and hidden bugs. Pull requests and issue reports are
+much appreciated :)
+
+Forms follows semantic versioning but offers no guarantees of backwards
+compatibility until version 1.0. Keep in mind that breaking changes might occur.
+We will do our best to make the community aware of any non-trivial breaking
+changes beforehand. We recommend using a dependency vendoring tool such as
+[godep](https://github.com/tools/godep) to ensure that breaking changes will not
+break your application.
 
 Installation
 ------------
@@ -80,6 +99,11 @@ func CreateUserHandler(res http.ResponseWriter, req *http.Request) {
 	// with it.
 }
 ```
+
+Contributing
+------------
+
+See [CONTRIBUTING.md](https://github.com/albrow/forms/blob/master/CONTRIBUTING.md)
 
 License
 -------

@@ -10,7 +10,7 @@ for converting data into other types and a Validator object which can be
 used to validate the data. Forms is framework-agnostic and works directly
 with the http package.
 
-Version 0.1.0
+Version 0.3.2
 
 
 Development Status

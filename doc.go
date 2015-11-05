@@ -12,5 +12,5 @@
 // For the full source code, example usage, and more, visit
 // https://github.com/albrow/forms.
 //
-// Version 0.1.0
+// Version 0.3.2
 package forms

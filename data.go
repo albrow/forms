@@ -15,7 +15,8 @@ import (
 	"strings"
 )
 
-const DefaultMaxFormSize = 2048
+// DefaultMaxFormSize is the default maximum form size (in bytes) used by the Parse function.
+const DefaultMaxFormSize = 500000
 
 // Data holds data obtained from the request body and url query parameters.
 // Because Data is built from multiple sources, sometimes there will be more

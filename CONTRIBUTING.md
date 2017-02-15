@@ -19,11 +19,10 @@ If you are thinking about submitting an issue please remember to:
 
 ### Pull Requests
 
-Forms uses semantic versioning and the [git branching model described here](http://nvie.com/posts/a-successful-git-branching-model/).
-If you plan on submitting a pull request, you should:
+In order to submit a pull request:
 
-1. Fork the repository.
-2. Create a new "feature branch" off of **develop** (not master) with a descriptive name (e.g. fix-database-error).
-3. Make your changes in the feature branch.
-4. Run the tests to make sure that they still pass. Updated the tests if needed.
-5. Submit a pull request to merge your feature branch into the **develop** branch. Please do not request to merge directly into master.
+Fork the repository.
+Create a new "feature branch" with a descriptive name (e.g. fix-database-error).
+Make your changes in the feature branch.
+Run the tests to make sure that they still pass. Updated the tests if needed.
+Submit a pull request to merge your feature branch into the master branch.

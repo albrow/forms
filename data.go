@@ -15,6 +15,9 @@ import (
 	"strings"
 )
 
+// DefaultMaxFormSize is the default maximum form size (in bytes) used by the Parse function.
+const DefaultMaxFormSize = 500000
+
 // Data holds data obtained from the request body and url query parameters.
 // Because Data is built from multiple sources, sometimes there will be more
 // than one value for a given key. You can use Get, Set, Add, and Del to access
@@ -46,15 +49,15 @@ func newData() *Data {
 	}
 }
 
-// Parse parses the request body and url query parameters into
+// ParseMax parses the request body and url query parameters into
 // Data. The content in the body of the request has a higher priority,
 // will be added to Data first, and will be the result of any operation
 // which gets the first element for a given key (e.g. Get, GetInt, or GetBool).
-func Parse(req *http.Request) (*Data, error) {
+func ParseMax(req *http.Request, max int64) (*Data, error) {
 	data := newData()
 	contentType := req.Header.Get("Content-Type")
 	if strings.Contains(contentType, "multipart/form-data") {
-		if err := req.ParseMultipartForm(2048); err != nil {
+		if err := req.ParseMultipartForm(max); err != nil {
 			return nil, err
 		}
 		for key, vals := range req.MultipartForm.Value {
@@ -92,6 +95,11 @@ func Parse(req *http.Request) (*Data, error) {
 		}
 	}
 	return data, nil
+}
+
+// Parse uses the default max form size defined above and calls ParseMax
+func Parse(req *http.Request) (*Data, error) {
+	return ParseMax(req, DefaultMaxFormSize)
 }
 
 // CreateFromMap returns a Data object with keys and values matching

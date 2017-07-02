@@ -61,6 +61,24 @@ func TestRequire(t *testing.T) {
 	}
 }
 
+func TestRequireAll(t *testing.T) {
+	data := newData()
+	data.Add("name", "Bob")
+	data.Add("age", "25")
+	data.Add("color", "")
+
+	val := data.Validator()
+	val.RequireAll("age", "name")
+	if val.HasErrors() {
+		t.Errorf("Expected no errors but got errors: %v", val.Messages())
+	}
+
+	val.RequireAll("color", "a")
+	if len(val.Messages()) != 2 {
+		t.Errorf("Expected 2 validation errors but got %d.", len(val.Messages()))
+	}
+}
+
 func TestRequireFile(t *testing.T) {
 	data := newData()
 	val := data.Validator()

@@ -114,6 +114,12 @@ func (v *Validator) Require(field string) *ValidationResult {
 	}
 }
 
+func (v *Validator) RequireAll(fields ...string) {
+	for _, field := range fields {
+		v.Require(field)
+	}
+}
+
 // RequireFile will add an error to the Validator if data.Files[field]
 // does not exist or is an empty file
 func (v *Validator) RequireFile(field string) *ValidationResult {

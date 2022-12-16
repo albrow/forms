@@ -16,12 +16,10 @@ Version 0.4.0
 Development Status
 ------------------
 
-Forms is being actively developed and is well-tested. However, since it is still
-a young library, it is not recommended for use in mission-critical production
-applications at this time. It is probably fine to use for low-traffic hobby
-sites, and in fact we encourage its use in those settings to help polish the API
-and find missing features and hidden bugs. Pull requests and issue reports are
-much appreciated :)
+Forms is no longer actively maintained, and therefore it is not recommended for
+use in mission-critical production applications at this time. That said, it is
+fairly well tested and is probably fine to use for low-traffic hobby
+sites.
 
 Forms follows semantic versioning but offers no guarantees of backwards
 compatibility until version 1.0. Keep in mind that breaking changes might occur.
